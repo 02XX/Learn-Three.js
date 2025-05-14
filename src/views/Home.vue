@@ -51,10 +51,10 @@ const scenes = [
     },
     {
         id: 2,
-        name: '球体空间',
-        path: '/sphere',
-        description: '光滑金属质感球体展示',
-        thumbnail: '/thumbnails/vite.svg'
+        name: '延迟渲染',
+        path: '/deferred',
+        description: '展示延迟渲染',
+        thumbnail: '/thumbnails/basic.png'
     },
     {
         id: 3,

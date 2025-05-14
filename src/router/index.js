@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '@/views/Home.vue'
 import Basic from '@/views/scenes/Basic.vue'
+import Deferred from '@/views/scenes/DeferredRendering.vue'
 import NotFound from '@/views/NotFound.vue'
 const routes = [
     {
@@ -14,11 +15,13 @@ const routes = [
     {
         path: '/basic',
         name: 'basic',
-        component: Basic,
-        meta: {
-            title: '基础场景'
-        }
+        component: Basic
     },  
+    {
+        path: '/deferred',
+        name: 'deferred',
+        component: Deferred,
+    },
     {
         path: '/:pathMatch(.*)*', // 404
         name: 'NotFound',
