@@ -3,6 +3,7 @@ import Home from '@/views/Home.vue'
 import Basic from '@/views/scenes/Basic.vue'
 import Deferred from '@/views/scenes/DeferredRendering.vue'
 import NotFound from '@/views/NotFound.vue'
+import PBR from '@/views/scenes/PBR.vue'
 const routes = [
     {
         path: '/',
@@ -21,6 +22,11 @@ const routes = [
         path: '/deferred',
         name: 'deferred',
         component: Deferred,
+    },
+    {
+        path: '/pbr',
+        name: 'pbr',
+        component: PBR,
     },
     {
         path: '/:pathMatch(.*)*', // 404

@@ -10,7 +10,7 @@ layout(location = 3) out vec4 outMetallicRoughness; // R: 金属度, G: 粗糙�
 
 
 void main() {
-    outAlbedo = vec4(1.0, 1.0, 0.0, 1.0);
+    outAlbedo = vec4(1.0, 0.0, 0.0, 1.0);
     outNormal = vec4(vNormal, 1.0);
     outPosition = vec4(vPosition, 1.0);
     outMetallicRoughness = vec4(0.5, 0.5, 0.5, 1.0);

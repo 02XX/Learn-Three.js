@@ -54,14 +54,14 @@ const scenes = [
         name: '延迟渲染',
         path: '/deferred',
         description: '展示延迟渲染',
-        thumbnail: '/thumbnails/basic.png'
+        thumbnail: '/thumbnails/deferred.png'
     },
     {
         id: 3,
-        name: '自定义场景',
-        path: '/custom',
-        description: '上传并查看您的3D模型',
-        thumbnail: null
+        name: 'PBR渲染',
+        path: '/pbr',
+        description: '展示PBR渲染',
+        thumbnail: '/thumbnails/basic.png'
     },
     {
         id: 4,

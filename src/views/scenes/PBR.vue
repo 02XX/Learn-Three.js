@@ -1,20 +1,20 @@
 <template>
-    <Canvas :title="title" :saveToLocal="saveToLocal" ref="canvasRef"></Canvas>
+    <Canvas :title="title" :saveToLocal="handleSave" ref="canvasRef"></Canvas>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import Canvas from '@/components/Canvas.vue'
+import pbrVertexShader from '@/shaders/pbr.vert?raw'
+import pbrFragmentShader from '@/shaders/pbr.frag?raw'
 
 import { saveScene } from '@/utils/threeUtils.js'
 
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-
-const title = ref('基础场景')
+const title = ref('PBR渲染')
 
 const canvasRef = ref(null)
 let scene, camera, renderer, controls, axesHelper, gridHelper
@@ -43,7 +43,11 @@ const CreateScene = () => {
 
     // 创建立方体
     const geometry = new THREE.BoxGeometry(1, 1, 1)
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    const material = new THREE.ShaderMaterial({
+        vertexShader: pbrVertexShader,
+        fragmentShader: pbrFragmentShader,
+        glslVersion: THREE.GLSL3
+    })
     const cube = new THREE.Mesh(geometry, material)
     scene.add(cube)
 
@@ -54,10 +58,7 @@ const CreateScene = () => {
     // 控制器
     controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
-    const gui = new GUI();
-    gui.add(cube.position, 'x', -5, 5, 0.1).name('Cube X Position');
-    gui.add(cube.position, 'y', -5, 5, 0.1).name('Cube Y Position');
-    gui.add(cube.position, 'z', -5, 5, 0.1).name('Cube Z Position');
+
     // 动画循环
     const animate = () => {
         animationId = requestAnimationFrame(animate)
@@ -73,7 +74,7 @@ const handleResize = () => {
     camera.updateProjectionMatrix()
     renderer.setSize(window.innerWidth, window.innerHeight)
 }
-const saveToLocal = () => {
+const handleSave = () => {
     saveScene({
         controls: controls,
         renderer: renderer,
