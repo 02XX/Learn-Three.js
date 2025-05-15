@@ -47,21 +47,21 @@ const scenes = [
         name: '基础场景',
         path: '/basic',
         description: '展示基础场景',
-        thumbnail: '/thumbnails/basic.png'
+        thumbnail: './thumbnails/basic.png'
     },
     {
         id: 2,
         name: '延迟渲染',
         path: '/deferred',
         description: '展示延迟渲染',
-        thumbnail: '/thumbnails/deferred.png'
+        thumbnail: './thumbnails/deferred.png'
     },
     {
         id: 3,
         name: 'PBR渲染',
         path: '/pbr',
         description: '展示PBR渲染',
-        thumbnail: '/thumbnails/basic.png'
+        thumbnail: './thumbnails/basic.png'
     },
     {
         id: 4,
