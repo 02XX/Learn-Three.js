@@ -11,6 +11,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.6",
     "element-plus": "^2.9.10",
+    "mikktspace": "^1.1.1",
     "sass": "^1.88.0",
     "tailwindcss": "^4.1.6",
     "three": "^0.176.0",

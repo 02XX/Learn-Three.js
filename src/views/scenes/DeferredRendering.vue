@@ -6,10 +6,8 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
 import Canvas from '@/components/Canvas.vue'
 import { saveScene } from '@/utils/threeUtils.js'
-import { TransformControls } from 'three-stdlib'
 //shader
 import gBufferVertexShader from '@/shaders/gBuffer.vert?raw'
 import gBufferFragmentShader from '@/shaders/gBuffer.frag?raw'
@@ -19,12 +17,15 @@ import lightingFragmentShader from '@/shaders/lighting.frag?raw'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { TransformControls } from 'three-stdlib'
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 const title = ref('延迟渲染')
 const canvasRef = ref(null)
+const textureLoader = new THREE.TextureLoader()
 let scene, camera, renderer, controls, axesHelper, gridHelper, deferredScene,forwardScene,lightingMaterial
 let animationId = null
-let pointLightIndex = 0
-let pointLights = []
+let directionalLightIndex = 0
+let directionalLights = []
 const CreateScene = () => {
     scene = new THREE.Scene()
     deferredScene = new THREE.Scene()
@@ -43,6 +44,9 @@ const CreateScene = () => {
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setClearColor(0x000000)
+    const rock_wall_albedo = textureLoader.load('textures/rock_wall/rock_wall_13_diff_4k.png')
+    const rock_wall_normal = textureLoader.load('textures/rock_wall/rock_wall_13_nor_gl_4k.png')
+    const rock_wall_arm = textureLoader.load('textures/rock_wall/rock_wall_13_arm_4k.png')
     // G-Buffer
     const gBuffer = new THREE.WebGLRenderTarget(
         window.innerWidth,
@@ -62,6 +66,15 @@ const CreateScene = () => {
         {
             vertexShader: gBufferVertexShader,
             fragmentShader: gBufferFragmentShader,
+            uniforms:{
+                uAlbedo: { value: rock_wall_albedo },
+                uArm: { value: rock_wall_arm },
+                uNormal: { value: rock_wall_normal },
+                albedo: { value: new THREE.Vector3(1, 1, 1) },
+                metallic: { value: 0.5 },
+                roughness: { value: 0.5 },
+                normal: { value: 1 },
+            },
             glslVersion: THREE.GLSL3,
         }
     )
@@ -69,12 +82,14 @@ const CreateScene = () => {
     scene.add(cube)
 
     // lighting
-    for(let i = 0; i < 10; i++) {
-        const light = new THREE.PointLight(0xffffff, 1, 100)
-        light.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5)
-        light.color.setHSL(Math.random(), 1, 0.5)
+    for(let i = 0; i < 2; i++) {
+        const light = new THREE.DirectionalLight(0xffffff, 1, 100)
+        light.position.set(2,2,2)
         deferredScene.add(light)
-        pointLights.push(light)
+        directionalLights.push(light)
+        const sphereSize = 1;
+        const directionalLightHelper = new THREE.DirectionalLightHelper( light, sphereSize );
+        deferredScene.add( directionalLightHelper );
     }
     lightingMaterial = new THREE.ShaderMaterial({
         vertexShader: lightingVertexShader,
@@ -84,11 +99,11 @@ const CreateScene = () => {
             tAlbedo: { value: gBuffer.textures[0] },
             tNormal: { value: gBuffer.textures[1] },
             tPosition: { value: gBuffer.textures[2] },
-            tMetallicRoughness: { value: gBuffer.textures[3] },
-            debugMode: { value: 1 },
-            pointLightPosition : { value: pointLights.map(light => light.position) },
-            pointLightColor : { value: pointLights.map(light => light.color) },
-            pointLightIntensity : { value: pointLights.map(light => light.intensity) }
+            tArm: { value: gBuffer.textures[3] },
+            debugMode: { value: 0 },
+            directionalLightPosition : { value: directionalLights.map(light => light.position) },
+            directionalLightColor : { value: directionalLights.map(light => light.color) },
+            directionalLightIntensity : { value: directionalLights.map(light => light.intensity) }
         },
         glslVersion: THREE.GLSL3
     })
@@ -107,10 +122,16 @@ const CreateScene = () => {
     // 控制器
     controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
+    const transformControls = new TransformControls(camera, renderer.domElement);
+    transformControls.setMode('translate');
+    scene.add(transformControls);
+    transformControls.addEventListener('dragging-changed', (event) => {
+        orbitControls.enabled = !event.value;
+    });
     const gui = new GUI();
     gui.domElement.classList.add('light')
     const debugFolder = gui.addFolder('Debug')
-    debugFolder.add(lightingMaterial.uniforms.debugMode, 'value', [0,1,2,3,4]).name('Debug Mode').onChange(changeRender)
+    debugFolder.add(lightingMaterial.uniforms.debugMode, 'value', [0,1,2,3,4,5]).name('Debug Mode').onChange(changeRender)
     const cubeFolder = gui.addFolder('Cube')
     cubeFolder.add(cube.position, 'x', -5, 5, 0.1).name('Cube X Position');
     cubeFolder.add(cube.position, 'y', -5, 5, 0.1).name('Cube Y Position');
@@ -122,15 +143,15 @@ const CreateScene = () => {
     cubeFolder.add(cube.scale, 'y', 0, 5, 0.1).name('Cube Scale Y');
     cubeFolder.add(cube.scale, 'z', 0, 5, 0.1).name('Cube Scale Z');
     const lightFolder = gui.addFolder('Light')
-    lightFolder.add({ lightIndex: pointLightIndex }, 'lightIndex', pointLights.map((_, index) => index)).name('Light Index').onChange((index) => {
-        pointLightIndex = index
+    lightFolder.add({ lightIndex: directionalLightIndex }, 'lightIndex', directionalLights.map((_, index) => index)).name('Light Index').onChange((index) => {
+        directionalLightIndex = index
     })
-    lightFolder.add(pointLights[pointLightIndex].position, 'x', -5, 5, 0.1).name('Light X Position')
-    lightFolder.add(pointLights[pointLightIndex].position, 'y', -5, 5, 0.1).name('Light Y Position')
-    lightFolder.add(pointLights[pointLightIndex].position, 'z', -5, 5, 0.1).name('Light Z Position')
-    lightFolder.add(pointLights[pointLightIndex], 'intensity', 0, 10, 0.1).name('Light Intensity')
-    lightFolder.addColor(pointLights[pointLightIndex], 'color').name('Light Color').onChange((color) => {
-        pointLights[pointLightIndex].color.set(color)
+    lightFolder.add(directionalLights[directionalLightIndex].position, 'x', -5, 5, 0.1).name('Light X Position')
+    lightFolder.add(directionalLights[directionalLightIndex].position, 'y', -5, 5, 0.1).name('Light Y Position')
+    lightFolder.add(directionalLights[directionalLightIndex].position, 'z', -5, 5, 0.1).name('Light Z Position')
+    lightFolder.add(directionalLights[directionalLightIndex], 'intensity', 0, 10, 0.1).name('Light Intensity')
+    lightFolder.addColor(directionalLights[directionalLightIndex], 'color').name('Light Color').onChange((color) => {
+        directionalLights[directionalLightIndex].color.set(color)
     })
     // 动画循环
     const animate = () => {
